@@ -25,26 +25,22 @@ module.exports = function(grunt) {
 
     // Before generating any new files, remove any previously-created files.
     clean: {
-      tests: ['tmp']
+      tests: ['tmp/*']
     },
 
     // Configuration to be run (and then tested).
     hackmyresume: {
       default_options: {
-        options: {
-        },
-        files: {
-          'tmp/default_options': ['test/fixtures/testing', 'test/fixtures/123']
-        }
+        options: {},
+        src: 'test/fixtures/default_options.json',
+        dest: 'tmp/default_options.html'
       },
       custom_options: {
         options: {
-          separator: ': ',
-          punctuation: ' !!!'
+          theme: 'compact'
         },
-        files: {
-          'tmp/custom_options': ['test/fixtures/testing', 'test/fixtures/123']
-        }
+        src: 'test/fixtures/custom_options.json',
+        dest: 'tmp/custom_options.html'
       }
     },
 

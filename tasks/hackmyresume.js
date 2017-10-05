@@ -6,86 +6,60 @@
  * Licensed under the MIT license.
  */
 
-
-
 'use strict';
-
-
-
 module.exports = function(grunt) {
+  var HMR = require('hackmyresume');
+  var HMROUT = require('hackmyresume/dist/cli/out');
+  var HMRERR = require('hackmyresume/dist/cli/error');
 
-
-
-  // Require specific HMR modules
-  var HMR = require( 'hackmyresume' );
-  var HMROUT = require( 'hackmyresume/dist/cli/out');
-  var HMRERR = require( 'hackmyresume/dist/cli/error' );
-  var _out;
-
-
-
-/** Generate resumes through the HackMyResume API. */
-  function _build( srcArray, destFile, options ) {
-
+  function _build(hmrOut, srcArray, destFile, options) {
     try {
-      grunt.log.writeln( 'Launching HackMyResume...' );
+      grunt.log.writeln('Launching HackMyResume...');
 
-      // Going through the low-level HMR interface. Set up a verb
       var v = new HMR.verbs.build();
 
-      // Add error / output handlers so HMR colored output displays in Grunt.
       v.on('hmr:error', function(ex) {
         HMRERR.err.apply(HMRERR, arguments);
         grunt.warn('An error occurred during HackMyResume resume generation.');
       });
+
       v.on('hmr:status', function() {
-        _out.do.apply(_out, arguments);
+        hmrOut.do.apply(hmrOut, arguments);
       });
+
       options.errHandler = v;
 
       // Invoke the verb and kick off resume generation
-      v.invoke.call( v, srcArray, [destFile], options, function() { } );
-      if( v.errorCode ) {
+      v.invoke.call(v, srcArray, [destFile], options);
+      if(v.errorCode) {
         grunt.warn('HackMyResume exited with error ' + v.errorCode + '.');
       }
 
       // TODO: Use grunt.file.write|read against the string version of the
       // HackMyResume API.
+
+      grunt.log.writeln('Resume(s) successfully generated to "' + destFile + '".');
     }
-    catch( ex ) {
+    catch(ex) {
 
       var msg = ex.toString();
-      if( ex.stack ) {
+      if(ex.stack) {
         msg += ex.stack;
       }
-      grunt.warn( msg );
-
-      return;
+      grunt.warn(msg);
     }
-
-    // Print a success message.
-    grunt.log.writeln('Resume(s) successfully generated to "' + destFile + '".');
   }
 
-
-
-  /** The 'hackmyresume' Grunt task */
   function _task() {
-
-      // Set up options and defaults
       var options = this.options({
         theme: 'modern',
         css: 'embed'
       });
 
-      // Now that we have options, set up output and error modules
-      _out = new HMROUT( options );
-      HMRERR.init( options.debug, options.assert, options.silent );
+      var hmrOut = new HMROUT(options);
+      HMRERR.init(options.debug, options.assert, options.silent);
 
-      // Process incoming files. These are always in Grunt's array format.
       this.files.forEach(function(f) {
-
-        // Exclude invalid files, per the Grunt sample
         var src = f.src.filter(function(filepath) {
           if (!grunt.file.exists(filepath)) {
             grunt.log.warn('Source file "' + filepath + '" not found.');
@@ -94,22 +68,13 @@ module.exports = function(grunt) {
             return true;
           }
         });
-
-        // Run HackMyResume
-        _build( src, f.dest, options );
-
+        _build(hmrOut, src, f.dest, options);
       });
   }
 
-
-
-  // Register the task
   grunt.registerMultiTask(
     'hackmyresume',
     'Grunt plugin for HackMyResume.',
     _task
   );
-
-
-
 };
